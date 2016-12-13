@@ -4,11 +4,18 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"math/rand"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 )
+
+const gitattribs = `*.zip filter=lfs diff=lfs merge=lfs -text
+*.xlsm filter=lfs diff=lfs merge=lfs -text
+*.kml filter=lfs diff=lfs merge=lfs -text
+`
 
 // Utility to re-create a file structure for https://github.com/git-lfs/git-lfs/issues/1750
 func main() {
@@ -74,7 +81,26 @@ func main() {
 	}
 	numFiles++
 
-	fmt.Println("Done:", numFiles, "files created")
+	fmt.Println("Created", numFiles, "files")
+
+	// Create gitattributes
+	err = ioutil.WriteFile(filepath.Join(dir, ".gitattributes"), []byte(gitattribs), 0644)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(3)
+	}
+	fmt.Println("Created .gitattributes")
+
+	// Git init
+	cmd := exec.Command("git", "init", dir)
+	err = cmd.Run()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(3)
+	}
+	fmt.Println("Created git repo")
+
+	fmt.Println("Done")
 
 }
 
