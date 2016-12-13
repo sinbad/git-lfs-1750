@@ -32,17 +32,9 @@ func main() {
 	}
 	fmt.Println("Target directory:", dir)
 
-	err := os.MkdirAll(dir, 0755)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(3)
-	}
-
+	checkError(os.MkdirAll(dir, 0755))
 	f, err := os.OpenFile(filename, os.O_RDONLY, 0664)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(3)
-	}
+	checkError(err)
 	defer f.Close()
 
 	scanner := bufio.NewScanner(f)
@@ -60,11 +52,7 @@ func main() {
 		// To ignore dirs, write files 1 element behind, and skip writing any
 		// entries which have sub-entries in the next line (because that's a dir)
 		if len(lastLine) > 0 && !strings.HasPrefix(line, lastLine) {
-			err := writeFile(filepath.Join(dir, filepath.Clean(lastLine)), randReader)
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(3)
-			}
+			checkError(writeFile(filepath.Join(dir, filepath.Clean(lastLine)), randReader))
 
 			numFiles++
 		}
@@ -74,34 +62,29 @@ func main() {
 	}
 
 	// Last entry is always a file
-	err = writeFile(filepath.Join(dir, filepath.Clean(lastLine)), randReader)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(3)
-	}
+	checkError(writeFile(filepath.Join(dir, filepath.Clean(lastLine)), randReader))
 	numFiles++
 
 	fmt.Println("Created", numFiles, "files")
 
 	// Create gitattributes
-	err = ioutil.WriteFile(filepath.Join(dir, ".gitattributes"), []byte(gitattribs), 0644)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(3)
-	}
+	checkError(ioutil.WriteFile(filepath.Join(dir, ".gitattributes"), []byte(gitattribs), 0644))
 	fmt.Println("Created .gitattributes")
 
 	// Git init
 	cmd := exec.Command("git", "init", dir)
-	err = cmd.Run()
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(3)
-	}
+	checkError(cmd.Run())
 	fmt.Println("Created git repo")
 
 	fmt.Println("Done")
 
+}
+
+func checkError(err error) {
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(3)
+	}
 }
 
 func writeFile(destfile string, source io.Reader) error {
