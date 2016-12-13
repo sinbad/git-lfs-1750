@@ -12,11 +12,6 @@ import (
 	"strings"
 )
 
-const gitattribs = `*.zip filter=lfs diff=lfs merge=lfs -text
-*.xlsm filter=lfs diff=lfs merge=lfs -text
-*.kml filter=lfs diff=lfs merge=lfs -text
-`
-
 // Utility to re-create a file structure for https://github.com/git-lfs/git-lfs/issues/1750
 func main() {
 	if len(os.Args) < 2 {
@@ -75,6 +70,13 @@ func main() {
 	cmd := exec.Command("git", "init", dir)
 	checkError(cmd.Run())
 	fmt.Println("Created git repo")
+
+	// .gitignore
+	for file, contents := range pathToGitIgnoreContents {
+		path := filepath.Join(dir, file)
+		ioutil.WriteFile(path, []byte(contents), 0644)
+		fmt.Println("Created", file)
+	}
 
 	fmt.Println("Done")
 
